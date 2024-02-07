@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, g
 from flask import render_template
 from flask_wtf.csrf import CSRFProtect
 from flask_sqlalchemy import SQLAlchemy
@@ -15,7 +15,7 @@ def create_app():
     app.config['SECRET_KEY'] = 'secretkey'
     app.config['SESSION_COOKIE_NAME'] = 'gogglekaap'
     #app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:password@localhost/gogglekaap?charset=utf8'
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:password@3.35.27.89:3306/gogglekaap?charset=utf8'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:password@3.35.27.89:3306/gogglekaap?charset=utf8' #EC2 ubuntu 서버 Docker mySQL 연동
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
         
     if app.config['DEBUG']:
@@ -36,6 +36,21 @@ def create_app():
     '''CSRF INIT'''
     csrf.init_app(app)
          
+    '''REQUEST HOOK'''
+    #요청 전에 DB세션 생성
+    @app.before_request
+    def before_request():
+        g.db = db.session
+        
+        
+    #요청 끝나면 DB세션 클로즈
+    @app.teardown_request
+    def teardown_request(exception):
+        if hasattr(g, 'db'):
+            g.db.close()
+           
+        
+    
     
     @app.errorhandler(404)
     def page_404(error):

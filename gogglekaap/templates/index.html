@@ -9,5 +9,5 @@ Index
 {%- endblock %}
 
 {% block body -%}
-<h1>Hellow World!! {{ session.get('user_id') }}</h1>
+<h1>Hellow World!! {{ g.user.user_id }}</h1>
 {% endblock %}

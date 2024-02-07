@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, session, request
+from flask import Blueprint, render_template, redirect, url_for, flash, session, request, g
 from gogglekaap.forms.auth_form import LoginForm, RegisterForm
 from gogglekaap.models.user import User as UserModel
 from gogglekaap import db
@@ -6,6 +6,19 @@ from werkzeug import security
 
 NAME = 'auth'
 bp = Blueprint(NAME, __name__, url_prefix='/auth')
+
+#user session 관리
+@bp.before_app_request
+def before_app_request():
+    g.user = None
+    user_id = session.get('user_id')
+    if user_id:
+        user = UserModel.find_one_by_user_id(user_id)
+        if user:
+            g.user = user
+        else:
+            session.pop('user_id', None)
+
 
 """only for testing"""
 from dataclasses import dataclass
@@ -68,18 +81,19 @@ def register():
             flash('User ID is already exists')
             return redirect(request.path)
         else:
-            db.session.add(
+            g.db.add(
                 UserModel(
                     user_id = user_id,
                     user_name = user_name,
                     password = security.generate_password_hash(password)
                 )
             )
-            db.session.commit()
+            g.db.commit()
             #db.session.close()
             session['user_id'] = user_id
             return redirect(url_for('base.index'))
-
+        
+        return f'{user_id}, {user_name}, {password}, {repassword}'
 
     else: 
         flash_form_errors(form)
